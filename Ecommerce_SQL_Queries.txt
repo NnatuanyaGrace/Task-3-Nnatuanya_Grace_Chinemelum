@@ -1,0 +1,204 @@
+/*
+=============================================================
+PROJECT: E-commerce Data Analysis Using SQL Server
+DATABASE: TASK_3_SQL_DATA_ANALYSIS
+TABLE: dbo.Ecommerce_Orders
+TOOL: Microsoft SQL Server Management Studio (SSMS)
+
+PROJECT OBJECTIVE:
+Analyse e-commerce order data to identify order status
+patterns, high-value orders, product performance, payment
+method preferences, yearly sales trends, and data quality.
+
+SQL SKILLS:
+SELECT, WHERE, ORDER BY, GROUP BY, COUNT, SUM, AVG,
+CASE WHEN, COUNT(DISTINCT), YEAR, and IS NULL.
+=============================================================
+*/
+
+
+/*
+=============================================================
+SECTION 1: DATABASE SETUP
+=============================================================
+*/
+
+    CREATE DATABASE [TASK_3_SQL_DATA_ANALYSIS];
+
+-- Select the project database.
+USE [TASK_3_SQL_DATA_ANALYSIS];
+
+
+/*
+=============================================================
+SECTION 2: TABLE VERIFICATION
+=============================================================
+*/
+
+-- Check whether the Ecommerce_Orders table exists.
+SELECT TABLE_SCHEMA, TABLE_NAME
+FROM INFORMATION_SCHEMA.TABLES
+WHERE TABLE_NAME = 'Ecommerce_Orders';
+
+-- Display the first 10 records to inspect the dataset.
+SELECT TOP 10 *
+FROM dbo.Ecommerce_Orders;
+
+
+/*
+=============================================================
+SECTION 3: ORDER STATUS ANALYSIS
+BUSINESS QUESTION:
+How many orders are delivered, shipped, cancelled,
+returned, and pending?
+=============================================================
+*/
+
+--How many orders were delivered, Cancelled, Shipped, pending, returned?
+SELECT 
+OrderStatus,
+ COUNT(*) AS Total_Orders
+FROM dbo.Ecommerce_Orders
+WHERE OrderStatus IN ('Delivered', 'Shipped', 'Cancelled', 'Returned', 'Pending') 
+GROUP BY OrderStatus
+ORDER BY Total_Orders DESC;
+
+
+/*
+=============================================================
+SECTION 4: HIGH-VALUE ORDER ANALYSIS
+BUSINESS QUESTION:
+What are the five highest-value records with TotalPrice
+greater than 1,000?
+=============================================================
+*/
+
+--Which orders have a relatively high total price?
+SELECT TOP 5 OrderID, Product, Quantity, UnitPrice, TotalPrice
+FROM dbo.Ecommerce_Orders
+WHERE TotalPrice > 1000
+ORDER BY TotalPrice DESC
+
+
+
+/*
+=============================================================
+SECTION 5: DATE-BASED ANALYSIS
+BUSINESS QUESTION:
+Which orders were recorded during 2024?
+=============================================================
+*/
+
+--What orders were placed during 2024.
+SELECT OrderID, Date, Product, Quantity, TotalPrice
+FROM dbo.Ecommerce_Orders
+WHERE Date >= '2024-01-01'
+ AND Date < '2025-01-01'
+ORDER BY Date ASC;
+
+
+
+/*
+=============================================================
+SECTION 6: PRODUCT PERFORMANCE ANALYSIS
+BUSINESS QUESTIONS:
+1. Which products generate the highest total sales value?
+2. Which products have the highest total quantity sold?
+3. Which products have the highest sales value, the highest quantities sold & the highest average unit prices?
+=============================================================
+*/
+
+--Which products generate the highest total sales value?
+
+SELECT Product,
+ SUM(TotalPrice) AS Total_Revenue
+FROM dbo.Ecommerce_Orders
+GROUP BY Product
+ORDER BY Total_Revenue DESC;
+
+
+
+--Which products have the highest total quantity sold?
+
+SELECT Product,
+ SUM(Quantity) AS Total_Quantity_Sold
+FROM dbo.Ecommerce_Orders
+GROUP BY Product
+ORDER BY Total_Quantity_Sold DESC;
+
+
+--Which products have the highest sales value, the highest quantities sold & the highest average unit prices?
+
+SELECT Product,
+ COUNT(*) AS Number_of_Records,
+ SUM(Quantity) AS Total_Quantity_Sold,
+ AVG(UnitPrice) AS Average_Unit_Price,
+ SUM(TotalPrice) AS Total_Sales_Value
+FROM dbo.Ecommerce_Orders
+GROUP BY Product
+ORDER BY Total_Sales_Value DESC;
+
+
+/*
+=============================================================
+SECTION 7: PAYMENT METHOD ANALYSIS
+BUSINESS QUESTION:
+Which payment methods are most frequently recorded?
+=============================================================
+*/
+
+--Which payment methods appear most frequently in the dataset?
+
+SELECT PaymentMethod,
+ COUNT(*) AS Total_Records
+FROM dbo.Ecommerce_Orders
+GROUP BY PaymentMethod
+ORDER BY Total_Records DESC;
+
+/*
+=============================================================
+SECTION 8: YEARLY SALES ANALYSIS
+BUSINESS QUESTION:
+How does recorded sales value vary across years?
+=============================================================
+*/
+
+--How does recorded sales value vary across years?
+SELECT YEAR(Date) AS Sales_Year,
+ COUNT(DISTINCT OrderID) AS Total_Orders,
+ SUM(TotalPrice) AS Total_Sales_Value,
+ AVG(TotalPrice) AS Average_Record_Value
+FROM dbo.Ecommerce_Orders
+GROUP BY YEAR(Date)
+ORDER BY Sales_Year ASC;
+
+
+
+/*
+=============================================================
+SECTION 9: DATA QUALITY ASSESSMENT
+BUSINESS QUESTION:
+Are there missing values in selected important columns?
+=============================================================
+*/
+
+-- Count NULL values in selected columns.
+SELECT
+    SUM(CASE WHEN OrderID IS NULL THEN 1 ELSE 0 END)
+        AS Missing_OrderID,
+
+    SUM(CASE WHEN [Date] IS NULL THEN 1 ELSE 0 END)
+        AS Missing_Date,
+
+    SUM(CASE WHEN Product IS NULL THEN 1 ELSE 0 END)
+        AS Missing_Product,
+
+    SUM(CASE WHEN Quantity IS NULL THEN 1 ELSE 0 END)
+        AS Missing_Quantity,
+
+    SUM(CASE WHEN TotalPrice IS NULL THEN 1 ELSE 0 END)
+        AS Missing_TotalPrice
+FROM dbo.Ecommerce_Orders;
+
+
+/*
